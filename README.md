@@ -4,7 +4,7 @@ of [zet](https://pbat.ch/wiki/zet), the Zettelkasten
 utility in [Weewiki](https://pbat.ch/wiki/weewiki).
 
 # Prerequisites
-- sqlite3 (the sqlite3 utility).
+- sqlite3 (the sqlite3 CLI utility).
 - [weewiki](https://git.sr.ht/~pbatch/weewiki)
 
 # Usage
