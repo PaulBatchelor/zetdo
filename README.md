@@ -5,7 +5,7 @@ utility in [Weewiki](https://pbat.ch/wiki/weewiki).
 
 # Prerequisites
 - sqlite3 (the sqlite3 utility).
-- [weewiki](https://git.sr.ht)
+- [weewiki](https://git.sr.ht/~pbatch/weewiki)
 
 # Usage
 Create a new TODO database with
