@@ -1,0 +1,107 @@
+#!/bin/sh
+
+mkgroup() {
+    weewiki zet mkgroup $1 > /dev/null
+    weewiki zet link @$1 @zetdo > /dev/null
+}
+
+grouplist() {
+    weewiki zet var list state @$1 | \
+        awk -F '\t' \
+            '$3 ~ />/ {print substr($2, 0, 8), $1, substr($3, 2)}'
+}
+
+setstate() {
+    weewiki zet var link $1 state @$2
+}
+
+history() {
+UUID=$(weewiki zet resolve $1)
+sqlite3 a.db <<EOF
+.mode tabs
+SELECT datetime(time, "localtime"), substr(value, 2) from wikizet
+WHERE UUID IN
+(SELECT UUID from wikizet where value like "#$UUID")
+and VALUE like ">%"
+ORDER BY strftime("%s", time) ASC;
+EOF
+}
+
+if [[ "$#" -eq 0 ]]
+then
+    echo "Enter a command."
+    exit 1
+fi
+
+case $1 in
+    "create")
+        weewiki create
+        weewiki zet mkgroup zetdo > /dev/null
+        mkgroup TODO
+        mkgroup DONE
+        mkgroup WIP
+        mkgroup WAIT
+        ;;
+    "add")
+        read -p "say: " answer
+        UUID=$(weewiki zet rawsay "$answer" @zetdo)
+        weewiki zet var new $UUID state
+        weewiki zet var link $UUID state @TODO
+        ;;
+    "tasks")
+        grouplist TODO
+        ;;
+    "done")
+        if [[ ! "$#" -eq 2 ]]
+        then
+            echo "Usage: done uuid"
+            exit 1
+        fi
+        setstate $2 DONE
+        ;;
+    "set")
+        if [[ ! "$#" -eq 3 ]]
+        then
+            echo "Usage: set uuid group"
+            exit 1
+        fi
+        setstate $2 $3
+        ;;
+    "ls")
+        grouplist $2
+        ;;
+    "comment")
+        weewiki zet resolve $2 > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+            read -p "comment: " answer
+            weewiki zet rawsay "$answer" @zetdo $2 > /dev/null
+        fi
+        ;;
+    "history")
+        history $2
+        ;;
+    "export")
+        weewiki zet export zetdo
+        ;;
+    "rebuild")
+
+        if [[ $# -eq 1 ]]
+        then
+            echo "Usage: rebuild file.tsv"
+            exit 1
+        fi
+        if [[ -e "a.db" ]]
+        then
+            weewiki clear
+            weewiki vacuum
+        else
+            weewiki create
+        fi
+
+        weewiki zet import < $2
+        ;;
+    *)
+        echo "Could not find command '$1'"
+        ;;
+esac
