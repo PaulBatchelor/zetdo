@@ -101,6 +101,14 @@ case $1 in
 
         weewiki zet import < $2
         ;;
+    "mkgroup")
+        if [[ $# -eq 1 ]]
+        then
+            echo "Usage: mkgroup GROUP"
+            exit 1
+        fi
+        mkgroup $2
+        ;;
     *)
         echo "Could not find command '$1'"
         ;;
