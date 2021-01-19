@@ -47,6 +47,7 @@ case $1 in
         UUID=$(weewiki zet rawsay "$answer" @zetdo)
         weewiki zet var new $UUID state
         weewiki zet var link $UUID state @TODO
+        echo $UUID
         ;;
     "tasks")
         grouplist TODO
@@ -108,6 +109,14 @@ case $1 in
             exit 1
         fi
         mkgroup $2
+        ;;
+    "tag")
+        if [[ $# -eq 1 ]]
+        then
+            echo "Usage: link UUID GROUP"
+            exit 1
+        fi
+        weewiki zet link $2 @$3
         ;;
     *)
         echo "Could not find command '$1'"
