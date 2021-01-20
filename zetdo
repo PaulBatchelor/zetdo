@@ -50,7 +50,13 @@ case $1 in
         echo $UUID
         ;;
     "tasks")
-        grouplist TODO
+        if [[ "$#" -eq 1 ]]
+        then
+            grouplist TODO
+            exit 1
+        else
+            grouplist $2
+        fi
         ;;
     "done")
         if [[ ! "$#" -eq 2 ]]
