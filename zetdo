@@ -17,6 +17,8 @@ setstate() {
 
 history() {
 UUID=$(weewiki zet resolve $1)
+if [[ $# -eq 1 ]]
+then
 sqlite3 a.db <<EOF
 .mode tabs
 SELECT datetime(time, "localtime"), substr(value, 2) from wikizet
@@ -25,6 +27,18 @@ WHERE UUID IN
 and VALUE like ">%"
 ORDER BY strftime("%s", time) ASC;
 EOF
+else
+sqlite3 a.db <<EOF
+.mode tabs
+SELECT datetime(time, "localtime") as time_local,
+substr(value, 2) from wikizet
+WHERE UUID IN
+(SELECT UUID from wikizet where value like "#$UUID")
+and VALUE like ">%"
+and strftime('%Y-%m-%d', time_local) BETWEEN '$2' AND '$3'
+ORDER BY strftime("%s", time_local) ASC;
+EOF
+fi
 }
 
 if [[ "$#" -eq 0 ]]
@@ -86,7 +100,25 @@ case $1 in
         fi
         ;;
     "history")
-        history $2
+        if [[ $# -eq 1 ]]
+        then
+            echo "Usage: history UUID [start end]"
+            exit 1
+        fi
+
+        if [[ $# -eq 2 ]]
+        then
+            history $2
+        else
+            if [[ $3 -eq "today" ]]
+            then
+                today=$(date +"%Y-%m-%d")
+                history $2 $today $today
+            else
+                history $2 $3 $4
+            fi
+        fi
+
         ;;
     "export")
         weewiki zet export zetdo
