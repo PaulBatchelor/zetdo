@@ -5,5 +5,5 @@ alias buildzet="./zetdo rebuild zetdo.tsv"
 alias wip="./zetdo tasks WIP"
 
 hist() {
-./zetdo history $@ | awk -F"\t" '{print $1"\n\n"$2"\n---"}' | fold -s -w 80
+./zetdo history $@ | awk -F"\t" '{print $1"\n\n"$2"\n---"}' | fold -s -w 60
 }
