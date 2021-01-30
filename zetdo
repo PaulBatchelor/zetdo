@@ -173,6 +173,14 @@ case $1 in
         weewiki zet var new $2 blurb
         weewiki zet var set $2 blurb
         ;;
+    "touch")
+        if [[ $# -eq 1 ]]
+        then
+            echo "Usage: touch UUID"
+            exit 1
+        fi
+        weewiki zet var touch $2 state
+        ;;
     *)
         echo "Could not find command '$1'"
         ;;
