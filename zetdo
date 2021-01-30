@@ -8,7 +8,7 @@ mkgroup() {
 grouplist() {
     weewiki zet var list state @$1 | \
         awk -F '\t' \
-            '$3 ~ />/ {print substr($2, 0, 8), $1, substr($3, 2)}'
+            '$3 ~ /^>/ {print substr($2, 0, 8), $1, substr($3, 2)}'
 }
 
 setstate() {
@@ -163,6 +163,15 @@ case $1 in
             exit 1
         fi
         weewiki zet entry $2 | cut -f 1,3 | grep -v "^-"
+        ;;
+    "blurb")
+        if [[ $# -eq 1 ]]
+        then
+            echo "Usage: blurb UUID"
+            exit 1
+        fi
+        weewiki zet var new $2 blurb
+        weewiki zet var set $2 blurb
         ;;
     *)
         echo "Could not find command '$1'"
