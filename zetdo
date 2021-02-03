@@ -6,7 +6,7 @@ mkgroup() {
 }
 
 grouplist() {
-    weewiki zet var list state @$1 | \
+    weewiki zet var list state @$1 | weewiki zet ergoify | \
         awk -F '\t' \
             '$3 ~ /^>/ {print substr($2, 0, 8), $1, substr($3, 2)}'
 }
