@@ -1,8 +1,9 @@
 alias zet="weewiki zet"
 alias zetdo="rlwrap ./zetdo"
-alias dumpzet="./zetdo export > zetdo.tsv"
-alias buildzet="./zetdo rebuild zetdo.tsv"
 alias wip="./zetdo tasks WIP"
+alias agenda="./zetdo agenda"
+alias dv="./zetdo dv"
+alias uv="./zetdo uv"
 
 hist() {
 ./zetdo history $@ | awk -F"\t" '{print $1"\n\n"$2"\n---"}' | fold -s -w 60
@@ -10,4 +11,14 @@ hist() {
 
 tasks() {
     ./zetdo tasks $@
+}
+
+dumpzet() {
+    ./zetdo export > zetdo.tsv
+    ./zetdo lstexp > priority.tsv
+}
+
+buildzet() {
+    ./zetdo rebuild zetdo.tsv
+    ./zetdo lstimp < priority.tsv
 }

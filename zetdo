@@ -41,6 +41,127 @@ EOF
 fi
 }
 
+lstadd (){
+    UUID=$(weewiki zet resolve $1)
+
+    if [[ $? -eq 0 ]]
+    then
+        sqlite3 a.db <<EOF
+INSERT INTO zetdo_priority (UUID)
+VALUES('$UUID');
+EOF
+    fi
+}
+
+lstdel (){
+    UUID=$(weewiki zet resolve $1)
+
+    if [[ $? -eq 0 ]]
+    then
+        sqlite3 a.db <<EOF
+DELETE FROM zetdo_priority
+WHERE UUID is '$UUID'
+EOF
+    fi
+}
+
+agenda(){
+    agenda_query() {
+    cat <<EOF
+.mode tabs
+SELECT
+e.time,
+zetdo_priority.UUID,
+e.value,
+score
+FROM zetdo_priority
+INNER JOIN (SELECT
+UUID,
+time,
+value from wikizet
+WHERE value like ">%"
+) e
+ON zetdo_priority.UUID = e.UUID
+ORDER BY score DESC
+;
+EOF
+}
+
+    agenda_query |\
+        sqlite3 a.db |\
+        weewiki zet ergoify |\
+        awk -F "\t" '{print $4":", "["substr($2,1,8)"]", substr($3, 2)}'
+}
+
+upvote(){
+    UUID=$(weewiki zet resolve $1)
+    if [[ $? -eq 0 ]]
+    then
+        AMT=1
+
+        if [[ ! -z $2 ]]
+        then
+           AMT=$2
+        fi
+
+        sqlite3 a.db <<EOF
+UPDATE zetdo_priority
+SET score = score + $AMT
+WHERE UUID is '$UUID'
+EOF
+    fi
+}
+
+downvote(){
+    UUID=$(weewiki zet resolve $1)
+    if [[ $? -eq 0 ]]
+    then
+        if [[ ! -z $2 ]]
+        then
+           AMT=$2
+        fi
+        sqlite3 a.db <<EOF
+UPDATE zetdo_priority
+SET score = score - $AMT
+WHERE UUID is '$UUID';
+EOF
+    fi
+}
+
+create_list() {
+        sqlite3 a.db <<EOF
+CREATE TABLE IF NOT EXISTS zetdo_priority(
+UUID TEXT UNIQUE,
+score INT DEFAULT 0
+);
+EOF
+}
+
+lstexp() {
+    query() {
+        cat <<EOF
+.mode tabs
+SELECT UUID, score from zetdo_priority
+EOF
+    }
+    query | sqlite3 a.db
+}
+
+lstimp() {
+    create_list
+    read -r -d '' QUERY << EOM
+{
+print "INSERT INTO zetdo_priority(UUID, score) " \
+"VALUES(" \
+"'" \$1 "', "\
+\$2 \
+");"
+}
+EOM
+    awk -F "\t" "$QUERY" | sqlite3 a.db
+}
+
+
 if [[ "$#" -eq 0 ]]
 then
     echo "Enter a command."
@@ -55,6 +176,9 @@ case $1 in
         mkgroup DONE
         mkgroup WIP
         mkgroup WAIT
+        ;;
+    "create_list")
+        create_list
         ;;
     "add")
         read -p "say: " answer
@@ -181,7 +305,48 @@ case $1 in
         fi
         weewiki zet var touch $2 state
         ;;
+    "lstadd")
+        if [[ ! "$#" -eq 2 ]]
+        then
+            echo "Usage: $1 UUID"
+            exit 1
+        fi
+        lstadd $2
+        ;;
+    "lstdel")
+        if [[ ! "$#" -eq 2 ]]
+        then
+            echo "Usage: $1 UUID"
+            exit 1
+        fi
+        lstdel $2
+        ;;
+    "agenda")
+        agenda
+        ;;
+    "uv")
+        if [[ "$#" -lt 2 ]]
+        then
+            echo "Usage: $1 UUID (amt)"
+            exit 1
+        fi
+        upvote $2 $3
+        ;;
+    "dv")
+        if [[ "$#" -lt 2 ]]
+        then
+            echo "Usage: $1 UUID (amt)"
+            exit 1
+        fi
+        downvote $2 $3
+        ;;
+    "lstexp")
+        lstexp
+        ;;
+    "lstimp")
+        lstimp
+        ;;
     *)
-        echo "Could not find command '$1'"
+        echo "$0: could not find command '$1'"
         ;;
 esac
