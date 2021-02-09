@@ -187,6 +187,15 @@ lstdone() {
     fi
 }
 
+blurb() {
+    UUID=$(weewiki zet resolve $1)
+    if [[ "$?" -eq 0 ]]
+    then
+        weewiki zet var new $UUID blurb
+        weewiki zet var set $UUID blurb
+    fi
+}
+
 if [[ "$#" -eq 0 ]]
 then
     echo "Enter a command."
@@ -319,8 +328,7 @@ case $1 in
             echo "Usage: blurb UUID"
             exit 1
         fi
-        weewiki zet var new $2 blurb
-        weewiki zet var set $2 blurb
+        blurb $2
         ;;
     "touch")
         if [[ $# -eq 1 ]]
