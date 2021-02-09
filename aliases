@@ -4,13 +4,11 @@ alias wip="./zetdo tasks WIP"
 alias agenda="./zetdo agenda"
 alias dv="./zetdo dv"
 alias uv="./zetdo uv"
+alias comment="./zetdo comment"
+alias tasks="./zetdo tasks"
 
 hist() {
 ./zetdo history $@ | awk -F"\t" '{print $1"\n\n"$2"\n---"}' | fold -s -w 60
-}
-
-tasks() {
-    ./zetdo tasks $@
 }
 
 dumpzet() {
