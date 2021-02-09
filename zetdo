@@ -178,6 +178,14 @@ EOF
     query | sqlite3 a.db
 }
 
+lstdone() {
+    UUID=$(weewiki zet resolve $1)
+    if [[ "$?" -eq 0 ]]
+    then
+        setstate $UUID DONE
+        lstdel $UUID
+    fi
+}
 
 if [[ "$#" -eq 0 ]]
 then
@@ -366,6 +374,14 @@ case $1 in
         ;;
     "tags")
         tags
+        ;;
+    "lstdone")
+        if [[ ! "$#" -eq 2 ]]
+        then
+            echo "Usage: $1 UUID"
+            exit 1
+        fi
+        lstdone $2
         ;;
     *)
         echo "$0: could not find command '$1'"
