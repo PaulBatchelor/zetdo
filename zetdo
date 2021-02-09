@@ -210,8 +210,7 @@ case $1 in
         UUID=$(weewiki zet rawsay "$answer" @zetdo)
         weewiki zet var new $UUID state
         weewiki zet var link $UUID state @TODO
-        weewiki zet ergo $UUID
-        printf "\n"
+        printf "g%s\n" $(weewiki zet ergo $UUID)
         ;;
     "tasks")
         if [[ "$#" -eq 1 ]]
