@@ -196,6 +196,51 @@ blurb() {
     fi
 }
 
+boxit() {
+    read -r -d '' SCRIPT <<EOF
+BEGIN {
+    NROWS=58
+    printf "+"
+    for (i = 0; i < NROWS; i++) {
+        printf "-"
+    }
+    printf "+\n"
+}
+
+{
+    lsize = length(\$0)
+    lspace = (NROWS - lsize) / 2
+    rspace = lspace
+
+    if (lsize % 2 != 0) rspace--;
+
+    printf "|"
+
+    for (i = 0; i < lspace; i++) {
+        printf " "
+    }
+
+    printf \$0
+
+    for (i = 0; i < rspace; i++) {
+        printf " "
+    }
+
+    printf "|\n"
+}
+
+END {
+    printf "+"
+    for (i = 0; i < NROWS; i++) {
+        printf "-"
+    }
+    printf "+\n"
+}
+EOF
+
+awk "$SCRIPT"
+}
+
 if [[ "$#" -eq 0 ]]
 then
     echo "Enter a command."
@@ -389,6 +434,10 @@ case $1 in
             exit 1
         fi
         lstdone $2
+        ;;
+
+    "boxit")
+        boxit
         ;;
     *)
         echo "$0: could not find command '$1'"

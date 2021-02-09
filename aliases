@@ -8,7 +8,13 @@ alias comment="./zetdo comment"
 alias tasks="./zetdo tasks"
 
 hist() {
-./zetdo history $@ | awk -F"\t" '{print $1"\n\n"$2"\n---"}' | fold -s -w 60
+    ./zetdo entry $1 |\
+        cut -f 2 |\
+        grep "^>" |\
+        tail -n 1 |\
+        sed "s/^>//" |\
+        fold -s -w 58 | ./zetdo boxit
+    ./zetdo history $@ | awk -F"\t" '{print $1"\n\n"$2"\n---"}' | fold -s -w 60
 }
 
 dumpzet() {
