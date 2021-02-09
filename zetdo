@@ -149,7 +149,7 @@ EOF
 
 lstimp() {
     create_list
-    read -r -d '' QUERY << EOM
+    read -r -d '' QUERY <<EOF
 {
 print "INSERT INTO zetdo_priority(UUID, score) " \
 "VALUES(" \
@@ -157,8 +157,25 @@ print "INSERT INTO zetdo_priority(UUID, score) " \
 \$2 \
 ");"
 }
-EOM
+EOF
     awk -F "\t" "$QUERY" | sqlite3 a.db
+}
+
+tags() {
+    query() {
+    cat <<EOF
+SELECT SUBSTR(value, 2) FROM wikizet
+WHERE UUID in (SELECT UUID FROM wikizet
+INNER JOIN
+    (SELECT '#' || UUID AS addr from wikizet
+    WHERE value IS '@zetdo' LIMIT 1) g
+    where value = addr)
+AND value like '@%'
+;
+EOF
+    }
+
+    query | sqlite3 a.db
 }
 
 
@@ -346,6 +363,9 @@ case $1 in
         ;;
     "lstimp")
         lstimp
+        ;;
+    "tags")
+        tags
         ;;
     *)
         echo "$0: could not find command '$1'"
