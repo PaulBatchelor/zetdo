@@ -116,6 +116,8 @@ downvote(){
     UUID=$(weewiki zet resolve $1)
     if [[ $? -eq 0 ]]
     then
+        AMT=1
+
         if [[ ! -z $2 ]]
         then
            AMT=$2
