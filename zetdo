@@ -315,11 +315,11 @@ case $1 in
             exit 1
         fi
 
-        if [[ $# -eq 2 ]]
+        if [[ "$#" -eq 2 ]]
         then
             history $2
         else
-            if [[ $3 -eq "today" ]]
+            if [[ "$3" = "today" ]]
             then
                 today=$(date +"%Y-%m-%d")
                 history $2 $today $today
