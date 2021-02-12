@@ -243,6 +243,10 @@ EOF
 awk "$SCRIPT"
 }
 
+tagged () {
+    printf "Not yet implemented yet.\n"
+}
+
 if [[ "$#" -eq 0 ]]
 then
     echo "Enter a command."
@@ -440,6 +444,14 @@ case $1 in
 
     "boxit")
         boxit
+        ;;
+    "tagged")
+        if [[ ! "$#" -eq 2 ]]
+        then
+            echo "Usage: $1 GROUP"
+            exit 1
+        fi
+        tagged $2
         ;;
     *)
         echo "$0: could not find command '$1'"
