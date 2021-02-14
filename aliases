@@ -26,3 +26,9 @@ buildzet() {
     ./zetdo rebuild zetdo.tsv
     ./zetdo lstimp < priority.tsv
 }
+
+# the general convention now is for all uncompleted subtasks
+# to have a state of TODO
+subtasks() {
+    zetdo subtasks $1 TODO
+}

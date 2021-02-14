@@ -247,9 +247,9 @@ EOF
 awk "$SCRIPT"
 }
 
-tagged () {
+subtasks () {
     ZETDO_UUID=$(weewiki zet resolve @zetdo)
-    GROUP_UUID=$(weewiki zet resolve @$1)
+    ITEM_UUID=$(weewiki zet resolve $1)
 
     if [[ ! $? -eq 0 ]]
     then
@@ -258,8 +258,15 @@ tagged () {
 query() {
     sqlite3 a.db <<EOF
 .mode tabs
-SELECT time, UUID, value
+SELECT time, UUID, value, substr(state, 9)
 FROM wikizet
+
+INNER JOIN
+    (SELECT UUID as ID, value as state
+    FROM wikizet WHERE value LIKE '\$state:%'
+    ) states
+    ON wikizet.UUID = states.ID
+
 WHERE UUID in
     (SELECT UUID
     FROM wikizet
@@ -272,13 +279,27 @@ WHERE UUID in
                 FROM wikizet
                 WHERE value IS '#' || '$ZETDO_UUID')
         AND value LIKE '\$state:%')
-    AND value IS '#' || '$GROUP_UUID')
-AND value like '>%';
+    AND value IS '#' || '$ITEM_UUID')
+AND value like '>%'
 ;
 EOF
 }
 
-query | presentation
+if [[ $# -eq 2 ]]
+then
+    GROUP_UUID=$(weewiki zet resolve @$2)
+    if [[ ! $? -eq 0 ]]
+    then
+        exit 1
+    fi
+    query |\
+        awk \
+            -vID=$GROUP_UUID -F "\t" \
+            '$4 ~ ID {print  $1 "\t" $2 "\t" $3}' |\
+        presentation
+else
+    query | presentation
+fi
 }
 
 if [[ "$#" -eq 0 ]]
@@ -485,7 +506,15 @@ case $1 in
             echo "Usage: $1 GROUP"
             exit 1
         fi
-        tagged $2
+        subtasks @$2
+        ;;
+    "subtasks")
+        if [[ "$#" -lt 2 ]]
+        then
+            echo "Usage: $1 UUID [STATE]"
+            exit 1
+        fi
+        subtasks $2 $3
         ;;
     *)
         echo "$0: could not find command '$1'"
