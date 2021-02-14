@@ -32,3 +32,9 @@ buildzet() {
 subtasks() {
     zetdo subtasks $1 TODO
 }
+
+# resolves id to first 8 digits
+
+id8() {
+    weewiki zet resolve $1 | awk '{print substr($0, 1, 8)}'
+}
