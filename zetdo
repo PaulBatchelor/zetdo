@@ -5,10 +5,14 @@ mkgroup() {
     weewiki zet link @$1 @zetdo > /dev/null
 }
 
+presentation () {
+    weewiki zet ergoify |\
+    awk -F '\t' \
+        '$3 ~ /^>/ {print substr($2, 0, 8), $1, substr($3, 2)}'
+}
+
 grouplist() {
-    weewiki zet var list state @$1 | weewiki zet ergoify | \
-        awk -F '\t' \
-            '$3 ~ /^>/ {print substr($2, 0, 8), $1, substr($3, 2)}'
+    weewiki zet var list state @$1 | presentation
 }
 
 setstate() {
@@ -244,7 +248,37 @@ awk "$SCRIPT"
 }
 
 tagged () {
-    printf "Not yet implemented yet.\n"
+    ZETDO_UUID=$(weewiki zet resolve @zetdo)
+    GROUP_UUID=$(weewiki zet resolve @$1)
+
+    if [[ ! $? -eq 0 ]]
+    then
+        exit 1
+    fi
+query() {
+    sqlite3 a.db <<EOF
+.mode tabs
+SELECT time, UUID, value
+FROM wikizet
+WHERE UUID in
+    (SELECT UUID
+    FROM wikizet
+    WHERE UUID in
+        (SELECT UUID
+            from wikizet
+            WHERE
+            UUID in
+                (SELECT UUID
+                FROM wikizet
+                WHERE value IS '#' || '$ZETDO_UUID')
+        AND value LIKE '\$state:%')
+    AND value IS '#' || '$GROUP_UUID')
+AND value like '>%';
+;
+EOF
+}
+
+query | presentation
 }
 
 if [[ "$#" -eq 0 ]]
