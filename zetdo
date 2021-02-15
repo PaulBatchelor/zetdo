@@ -21,6 +21,12 @@ setstate() {
 
 history() {
 UUID=$(weewiki zet resolve $1)
+
+if [[ ! $? -eq 0 ]]
+then
+    exit 1
+fi
+
 if [[ $# -eq 1 ]]
 then
 sqlite3 a.db <<EOF
@@ -515,6 +521,14 @@ case $1 in
             exit 1
         fi
         subtasks $2 $3
+        ;;
+    "getblurb")
+        if [[ "$#" -lt 2 ]]
+        then
+            echo "Usage: $1 UUID"
+            exit 1
+        fi
+        weewiki zet var get $2 blurb 2>/dev/null | awk '{print substr($0, 2)}'
         ;;
     *)
         echo "$0: could not find command '$1'"
