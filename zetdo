@@ -308,6 +308,71 @@ else
 fi
 }
 
+nsubtasks () {
+    ZETDO_UUID=$(weewiki zet resolve @zetdo)
+    ITEM_UUID=$(weewiki zet resolve $1)
+
+    if [[ ! $? -eq 0 ]]
+    then
+        exit 1
+    fi
+
+    GROUP_ID_QUERY=""
+    if [[ $# -eq 2 ]]
+    then
+        GROUP_UUID=$(weewiki zet resolve @$2)
+        GROUP_ID_QUERY="AND substr(state, 9) IS '$GROUP_UUID'"
+    fi
+query() {
+    sqlite3 a.db <<EOF
+.mode tabs
+SELECT COUNT(UUID)
+FROM wikizet
+
+INNER JOIN
+    (SELECT UUID as ID, value as state
+    FROM wikizet WHERE value LIKE '\$state:%'
+    ) states
+    ON wikizet.UUID = states.ID
+
+WHERE UUID in
+    (SELECT UUID
+    FROM wikizet
+    WHERE UUID in
+        (SELECT UUID
+            from wikizet
+            WHERE
+            UUID in
+                (SELECT UUID
+                FROM wikizet
+                WHERE value IS '#' || '$ZETDO_UUID')
+        AND value LIKE '\$state:%')
+    AND value IS '#' || '$ITEM_UUID')
+AND value like '>%'
+$GROUP_ID_QUERY
+;
+EOF
+}
+query
+# if [[ $# -eq 2 ]]
+# then
+#     GROUP_UUID=$(weewiki zet resolve @$2)
+#     if [[ ! $? -eq 0 ]]
+#     then
+#         exit 1
+#     fi
+#     query |\
+#         awk \
+#             -vID=$GROUP_UUID -F "\t" \
+#             '$4 ~ ID {print  $1 "\t" $2 "\t" $3}' |\
+#         presentation
+# else
+#     query | presentation
+# fi
+}
+
+# begin command parsing
+
 if [[ "$#" -eq 0 ]]
 then
     echo "Enter a command."
@@ -521,6 +586,14 @@ case $1 in
             exit 1
         fi
         subtasks $2 $3
+        ;;
+    "nsubtasks")
+        if [[ "$#" -lt 2 ]]
+        then
+            echo "Usage: $1 UUID [STATE]"
+            exit 1
+        fi
+        nsubtasks $2 $3
         ;;
     "getblurb")
         if [[ "$#" -lt 2 ]]
