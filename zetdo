@@ -76,31 +76,78 @@ EOF
 }
 
 agenda(){
+    ZETDO_UUID=$(weewiki zet resolve @zetdo)
+    DONE_UUID=$(weewiki zet resolve @DONE)
+
     agenda_query() {
     cat <<EOF
 .mode tabs
-SELECT
-e.time,
-zetdo_priority.UUID,
-e.value,
+SELECT time, agenda.UUID, value, score,
+IFNULL(t.NTODO, 0),
+IFNULL(t.nsubtasks, 0)
+FROM (SELECT
+e.time as time,
+zetdo_priority.UUID as UUID,
+e.value as value,
 score
 FROM zetdo_priority
-INNER JOIN (SELECT
-UUID,
-time,
-value from wikizet
-WHERE value like ">%"
+INNER JOIN (SELECT UUID, time,
+    value from wikizet
 ) e
 ON zetdo_priority.UUID = e.UUID
-ORDER BY score DESC
+) agenda
+
+LEFT JOIN
+(
+    SELECT parent_UUID, COUNT(subtasks.UUID) as nsubtasks,
+    SUM(TODO) as NTODO
+    FROM wikizet
+    INNER JOIN (
+        SELECT a.UUID, parent_UUID, b.TODOval NOT NULL as TODO from
+        (select UUID as UUID,
+        substr(value, 2) as parent_UUID
+        FROM wikizet
+        WHERE UUID in
+            (SELECT UUID FROM wikizet WHERE value LIKE '\$state:%')) a
+
+        LEFT JOIN (
+            SELECT UUID as UUID, value as TODOval FROM
+            wikizet WHERE value IS '\$state:#$DONE_UUID'
+        ) b
+
+        on a.UUID = b.UUID
+    ) subtasks
+    on wikizet.UUID = subtasks.parent_UUID
+    WHERE value LIKE '>%'
+ ) t
+ ON t.parent_UUID = agenda.UUID
+
+WHERE value like ">%"
+--ORDER BY score DESC
+
 ;
 EOF
 }
+    read -r -d '' AWK_QUERY <<EOM
+{
+    total=""
 
+    if (\$6 > 0) {
+        total="("\$5"/"\$6")"
+    }
+
+    print \$4":",
+        "["substr(\$2,1,8)"]",
+        substr(\$3, 2),
+        total
+}
+EOM
     agenda_query |\
         sqlite3 a.db |\
         weewiki zet ergoify |\
-        awk -F "\t" '{print $4":", "["substr($2,1,8)"]", substr($3, 2)}'
+        awk -F "\t" "$AWK_QUERY"
+
+    #agenda_query | sqlite3 a.db
 }
 
 upvote(){
