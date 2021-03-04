@@ -75,8 +75,8 @@ EOF
     fi
 }
 
-agenda(){
-    ZETDO_UUID=$(weewiki zet resolve @zetdo)
+agenda() {
+    #ZETDO_UUID=$(weewiki zet resolve @zetdo)
     DONE_UUID=$(weewiki zet resolve @DONE)
 
     agenda_query() {
@@ -119,11 +119,12 @@ LEFT JOIN
     ) subtasks
     on wikizet.UUID = subtasks.parent_UUID
     WHERE value LIKE '>%'
+    GROUP BY parent_UUID
  ) t
  ON t.parent_UUID = agenda.UUID
 
 WHERE value like ">%"
---ORDER BY score DESC
+ORDER BY score DESC
 
 ;
 EOF
