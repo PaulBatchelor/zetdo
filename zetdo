@@ -76,12 +76,16 @@ EOF
 }
 
 agenda() {
-    #ZETDO_UUID=$(weewiki zet resolve @zetdo)
+    ZETDO_UUID=$(weewiki zet resolve @zetdo)
     DONE_UUID=$(weewiki zet resolve @DONE)
 
     agenda_query() {
     cat <<EOF
 .mode tabs
+CREATE TEMPORARY VIEW tzetdo AS SELECT * FROM
+wikizet where UUID in (SELECT UUID from wikizet
+WHERE value IS '#' || '$ZETDO_UUID');
+
 SELECT time, agenda.UUID, value, score,
 IFNULL(t.NTODO, 0),
 IFNULL(t.nsubtasks, 0)
@@ -101,7 +105,7 @@ LEFT JOIN
 (
     SELECT parent_UUID, COUNT(subtasks.UUID) as nsubtasks,
     SUM(TODO) as NTODO
-    FROM wikizet
+    FROM tzetdo
     INNER JOIN (
         SELECT a.UUID, parent_UUID, b.TODOval NOT NULL as TODO from
         (select UUID as UUID,
@@ -117,7 +121,7 @@ LEFT JOIN
 
         on a.UUID = b.UUID
     ) subtasks
-    on wikizet.UUID = subtasks.parent_UUID
+    on tzetdo.UUID = subtasks.parent_UUID
     WHERE value LIKE '>%'
     GROUP BY parent_UUID
  ) t
