@@ -629,7 +629,7 @@ case $1 in
             echo "Usage: $1 GROUP"
             exit 1
         fi
-        subtasks @$2
+        subtasks @$2 TODO
         ;;
     "subtasks")
         if [[ "$#" -lt 2 ]]
