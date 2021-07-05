@@ -466,6 +466,10 @@ query $1 NOT | weewiki zet ergoify | awk -F "\t" "$AWK_QUERY" |\
 
 }
 
+getblurb() {
+    weewiki zet var get $1 blurb 2>/dev/null | awk '{print substr($0, 2)}'
+}
+
 getinfo () {
     TASK_UUID=$(weewiki zet resolve $1)
     if [[ ! $? -eq 0 ]]
@@ -499,11 +503,8 @@ EOF
         printf "Tags:\t$TAGS\n"
     fi
 
-    BLURB=$(sqlite3 a.db <<EOF
-SELECT substr(value, 9) FROM wikizet where
-UUID is '$TASK_UUID' and VALUE like '\$blurb:%';
-EOF
-)
+    BLURB=$(getblurb $TASK_UUID)
+
     if [ ! -z "$BLURB" ]
     then
         printf "Blurb:\t$BLURB\n"
@@ -744,7 +745,7 @@ case $1 in
             echo "Usage: $1 UUID"
             exit 1
         fi
-        weewiki zet var get $2 blurb 2>/dev/null | awk '{print substr($0, 2)}'
+        getblurb $2
         ;;
     "belongs")
         if [[ "$#" -lt 2 ]]
