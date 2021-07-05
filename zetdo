@@ -423,7 +423,37 @@ query
 # fi
 }
 
-# begin command parsing
+searchit () {
+    #weewiki zet search $1 | presentation
+ZETDO_UUID=$(weewiki zet resolve @zetdo)
+SEARCHTERM=$1
+
+query() {
+sqlite3 a.db <<EOF
+.mode tabs
+select time, UUID, value from wikizet WHERE
+UUID in (SELECT UUID FROM WIKIZET WHERE value
+IS '#' || "$ZETDO_UUID")
+AND
+value MATCH "$SEARCHTERM";
+EOF
+}
+    read -r -d '' AWK_QUERY <<EOM
+{
+    print "["substr(\$2,1,8)"]",
+        substr(\$3, 2),
+        total
+}
+EOM
+
+query $1 | weewiki zet ergoify | awk -F "\t" "$AWK_QUERY"
+
+}
+
+
+#########################
+# begin command parsing #
+#########################
 
 if [[ "$#" -eq 0 ]]
 then
@@ -662,6 +692,14 @@ case $1 in
             exit 1
         fi
         weewiki zet tags $2
+        ;;
+    "search")
+        if [[ "$#" -lt 2 ]]
+        then
+            echo "Usage: $1 keywords"
+            exit 1
+        fi
+        searchit $2
         ;;
     *)
         echo "$0: could not find command '$1'"
