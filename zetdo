@@ -504,7 +504,6 @@ SELECT substr(value, 9) FROM wikizet where
 UUID is '$TASK_UUID' and VALUE like '\$blurb:%';
 EOF
 )
-
     if [ ! -z "$BLURB" ]
     then
         printf "Blurb:\t$BLURB\n"
@@ -769,7 +768,7 @@ case $1 in
             echo "Usage: $1 keywords"
             exit 1
         fi
-        getinfo $2
+        getinfo $2 | fold -s -w 60
         ;;
     *)
         echo "$0: could not find command '$1'"
