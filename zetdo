@@ -466,6 +466,52 @@ query $1 NOT | weewiki zet ergoify | awk -F "\t" "$AWK_QUERY" |\
 
 }
 
+getinfo () {
+    TASK_UUID=$(weewiki zet resolve $1)
+    if [[ ! $? -eq 0 ]]
+    then
+        exit 1
+    fi
+    printf "UUID:\t$TASK_UUID\n"
+    printf "ergoID:\tg%s\n" $(weewiki zet ergo $TASK_UUID)
+    printf "Title:\t"
+    sqlite3 a.db <<EOF
+SELECT substr(value, 2) FROM wikizet where
+UUID is '$TASK_UUID' and VALUE like '>%';
+EOF
+    printf "State:\t"
+
+    STATE_UUID=$(sqlite3 a.db <<EOF
+SELECT substr(value, 9) FROM wikizet where
+UUID is '$TASK_UUID' and VALUE like '\$state:%';
+EOF
+)
+    sqlite3 a.db <<EOF
+SELECT substr(value, 2) FROM wikizet where
+UUID is '$STATE_UUID' and VALUE like '@%';
+EOF
+
+    TAGS=$(weewiki zet tags $TASK_UUID | sed "/^zetdo$/d" |\
+        awk '{printf $0 " "}')
+
+    if [ ! -z "$TAGS" ]
+    then
+        printf "Tags:\t$TAGS\n"
+    fi
+
+    BLURB=$(sqlite3 a.db <<EOF
+SELECT substr(value, 9) FROM wikizet where
+UUID is '$TASK_UUID' and VALUE like '\$blurb:%';
+EOF
+)
+
+    if [ ! -z "$BLURB" ]
+    then
+        printf "Blurb:\t$BLURB\n"
+    fi
+
+}
+
 
 #########################
 # begin command parsing #
@@ -716,6 +762,14 @@ case $1 in
             exit 1
         fi
         searchit $2
+        ;;
+    "info")
+        if [[ "$#" -lt 2 ]]
+        then
+            echo "Usage: $1 keywords"
+            exit 1
+        fi
+        getinfo $2
         ;;
     *)
         echo "$0: could not find command '$1'"
