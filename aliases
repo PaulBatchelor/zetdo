@@ -7,6 +7,7 @@ alias uv="./zetdo uv"
 alias comment="./zetdo comment"
 alias tasks="./zetdo tasks"
 alias tagged="./zetdo tagged"
+alias zdi="./zetdo info"
 
 hist() {
     UUID=$(weewiki zet resolve $1)
