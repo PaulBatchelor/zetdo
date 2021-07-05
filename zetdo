@@ -431,22 +431,38 @@ SEARCHTERM=$1
 query() {
 sqlite3 a.db <<EOF
 .mode tabs
-select time, UUID, value from wikizet WHERE
-UUID in (SELECT UUID FROM WIKIZET WHERE value
-IS '#' || "$ZETDO_UUID")
-AND
-value MATCH "$SEARCHTERM";
+select time, UUID, value from wikizet
+WHERE UUID $2 in (SELECT UUID FROM wikizet
+WHERE value LIKE '\$state:%'
+)
+AND UUID in
+(SELECT UUID FROM wikizet
+    WHERE value IS '#' || "$ZETDO_UUID")
+
+AND value MATCH "$SEARCHTERM"
+AND value LIKE ">%"
+;
 EOF
 }
+
     read -r -d '' AWK_QUERY <<EOM
 {
     print "["substr(\$2,1,8)"]",
         substr(\$3, 2),
         total
+    print "---"
 }
 EOM
 
-query $1 | weewiki zet ergoify | awk -F "\t" "$AWK_QUERY"
+printf "Tasks\n" | boxit
+
+query $1 | weewiki zet ergoify | awk -F "\t" "$AWK_QUERY" |\
+    fold -s -w 60
+
+printf "Comments\n" | boxit
+
+query $1 NOT | weewiki zet ergoify | awk -F "\t" "$AWK_QUERY" |\
+    fold -s -w 60
 
 }
 
