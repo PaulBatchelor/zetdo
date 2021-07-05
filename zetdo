@@ -655,6 +655,14 @@ case $1 in
         fi
         weewiki zet var get $2 blurb 2>/dev/null | awk '{print substr($0, 2)}'
         ;;
+    "belongs")
+        if [[ "$#" -lt 2 ]]
+        then
+            echo "Usage: $1 UUID"
+            exit 1
+        fi
+        weewiki zet tags $2
+        ;;
     *)
         echo "$0: could not find command '$1'"
         ;;
