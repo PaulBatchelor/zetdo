@@ -54,7 +54,7 @@ EOF
     ./zetdo getblurb $UUID | fold -s -w 58 |\
         awk "$SCRIPT"
 
-    ./zetdo history $@ | awk -F"\t" '{print $1"\n\n"$2"\n---"}' | fold -s -w 60
+    ./zetdo history $@ | awk -F"\t" '{print $1"\n\n"$2"\n---"}' | fold -s -w 60 | less
 }
 
 dumpzet() {
