@@ -512,6 +512,30 @@ EOF
 
 }
 
+function stopwatch () {
+    ITEM_UUID=$(weewiki zet resolve $1)
+
+    if [[ ! $? -eq 0 ]]
+    then
+        exit 1
+    fi
+
+
+    START=$(date +%s)
+    printf "Clocking in for g%s.\n" \
+           $(weewiki zet ergo $ITEM_UUID | \
+                 awk '{print substr($0, 1, 8)}')
+    read -p "Press any key to stop" -n1
+    STOP=$(date +%s)
+    DUR=$(printf "$STOP - $START\n" | bc)
+    DUR_UUID=$(weewiki zet var create duration)
+    weewiki zet var set $DUR_UUID duration $DUR
+    weewiki zet link $DUR_UUID @zetdo
+    weewiki zet link $DUR_UUID $ITEM_UUID
+
+    printf "%d seconds elapsed\n" $DUR
+
+}
 
 #########################
 # begin command parsing #
@@ -770,6 +794,14 @@ case $1 in
             exit 1
         fi
         getinfo $2 | fold -s -w 60
+        ;;
+    "stopwatch")
+        if [[ "$#" -lt 2 ]]
+        then
+            echo "Usage: $1 UUID"
+            exit 1
+        fi
+        stopwatch $2
         ;;
     *)
         echo "$0: could not find command '$1'"
