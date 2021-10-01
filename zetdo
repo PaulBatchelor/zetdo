@@ -75,6 +75,34 @@ EOF
     fi
 }
 
+agendanosubtasks() {
+    agenda_query() {
+    cat <<EOF
+.mode tabs
+SELECT
+e.time,
+zetdo_priority.UUID,
+e.value,
+score
+FROM zetdo_priority
+INNER JOIN (SELECT
+UUID,
+time,
+value from wikizet
+WHERE value like ">%"
+) e
+ON zetdo_priority.UUID = e.UUID
+ORDER BY score DESC
+;
+EOF
+}
+
+    agenda_query |\
+        sqlite3 a.db |\
+        weewiki zet ergoify |\
+        awk -F "\t" '{print $4":", "["substr($2,1,8)"]", substr($3, 2)}'
+}
+
 agenda() {
     ZETDO_UUID=$(weewiki zet resolve @zetdo)
     DONE_UUID=$(weewiki zet resolve @DONE)
@@ -152,7 +180,6 @@ EOM
         weewiki zet ergoify |\
         awk -F "\t" "$AWK_QUERY"
 
-    #agenda_query | sqlite3 a.db
 }
 
 upvote(){
@@ -701,6 +728,9 @@ case $1 in
         ;;
     "agenda")
         agenda
+        ;;
+    "agendanosubtasks")
+        agendanosubtasks
         ;;
     "uv")
         if [[ "$#" -lt 2 ]]
