@@ -103,6 +103,7 @@ EOF
         awk -F "\t" '{print $4":", "["substr($2,1,8)"]", substr($3, 2)}'
 }
 
+# original agenda code, very slow
 agenda() {
     ZETDO_UUID=$(weewiki zet resolve @zetdo)
     DONE_UUID=$(weewiki zet resolve @DONE)
@@ -180,6 +181,105 @@ EOM
         weewiki zet ergoify |\
         awk -F "\t" "$AWK_QUERY"
 
+}
+
+
+# Faster version of agenda with subtasks
+agenda2() {
+    agenda_query() {
+    cat <<EOF
+.mode tabs
+SELECT
+e.time,
+zetdo_priority.UUID,
+e.value,
+score
+FROM zetdo_priority
+INNER JOIN (SELECT
+UUID,
+time,
+value from wikizet
+WHERE value like ">%"
+) e
+ON zetdo_priority.UUID = e.UUID
+ORDER BY score DESC
+;
+EOF
+}
+read -r -d '' AWK_QUERY <<EOM
+BEGIN {
+    "weewiki zet resolve @zetdo" | getline ZETDO_UUID
+    "weewiki zet resolve @DONE" | getline DONE_UUID
+    count = 0
+}
+
+function nsubtasks(UUID, showdone) {
+    "./zetdo nsubtasks " \
+    UUID \
+    " TODO" | getline todo
+
+
+group_id_query= " "
+
+if (showdone) {
+group_id_query= " AND substr(state, 9) IS '" DONE_UUID "'"
+}
+
+
+cmd = "sqlite3 a.db <<EOF \n\
+SELECT COUNT(UUID) \n\
+FROM wikizet \n\
+INNER JOIN \
+    (SELECT UUID as ID, value as state \
+    FROM wikizet WHERE value LIKE '" "\\\" "\$state:%' \
+    ) states \n\
+    ON wikizet.UUID = states.ID \n\
+WHERE UUID in \n\
+    (SELECT UUID \n\
+    FROM wikizet \n\
+    WHERE UUID in \n\
+        (SELECT UUID \n\
+            from wikizet \n\
+            WHERE \n\
+            UUID in \n\
+                (SELECT UUID \n\
+                FROM wikizet \n\
+                WHERE value IS '#' || '" ZETDO_UUID "') \n\
+        AND value LIKE '" "\\\" "\$state:%') \n\
+    AND value IS '#' || '" UUID "') \n\
+AND value like '>%' \n" group_id_query " \n\
+; \n\
+EOF"
+    cmd | getline total
+    return total
+}
+
+{
+    print \$0 "\t" nsubtasks(\$2, 1) "\t" nsubtasks(\$2, 0)
+}
+EOM
+
+    read -r -d '' DISPLAY <<EOM
+{
+    total=""
+
+    if (\$6 > 0) {
+        total="("\$5"/"\$6")"
+    }
+
+    print \$4":",
+        "["substr(\$2,1,8)"]",
+        substr(\$3, 2),
+        total
+}
+EOM
+
+
+    agenda_query |\
+        sqlite3 a.db |\
+        awk -F "\t" "$AWK_QUERY" |\
+        weewiki zet ergoify |\
+        awk -F "\t" "$DISPLAY"
 }
 
 upvote(){
@@ -727,7 +827,7 @@ case $1 in
         lstdel $2
         ;;
     "agenda")
-        agenda
+        agenda2
         ;;
     "agendanosubtasks")
         agendanosubtasks

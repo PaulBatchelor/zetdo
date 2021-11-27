@@ -1,7 +1,7 @@
 alias zet="weewiki zet"
 alias zetdo="rlwrap ./zetdo"
 alias wip="./zetdo tasks WIP"
-alias agenda="./zetdo agendanosubtasks"
+alias agenda="./zetdo agenda"
 alias dv="./zetdo dv"
 alias uv="./zetdo uv"
 alias comment="./zetdo comment"
