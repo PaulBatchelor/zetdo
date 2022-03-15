@@ -781,10 +781,10 @@ case $1 in
     "tag")
         if [[ $# -lt 2 ]]
         then
-            echo "Usage: link UUID GROUP"
+            echo "Usage: tag UUID GROUP"
             exit 1
         fi
-        weewiki zet link $2 @$3
+        weewiki zet tie $2 @$3
         ;;
     "entry")
         if [[ $# -eq 1 ]]
