@@ -31,7 +31,7 @@ if [[ $# -eq 1 ]]
 then
 sqlite3 a.db <<EOF
 .mode tabs
-SELECT datetime(time, "localtime"), substr(value, 2) from wikizet
+SELECT datetime(time, "localtime"), UUID, substr(value, 2) from wikizet
 WHERE UUID IN
 (SELECT UUID from wikizet where value like "#$UUID")
 and VALUE like ">%"
